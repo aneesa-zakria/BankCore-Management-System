@@ -1,6 +1,6 @@
-﻿using BankManagementSystem.Domain;
+﻿using System;
+using BankManagementSystem.Domain;
 using BankManagementSystem.Presentation;
-using System;
 
 namespace BankManagementSystem
 {
@@ -8,10 +8,24 @@ namespace BankManagementSystem
     {
         static void Main(string[] args)
         {
+            DbMigrator.EnsureDatabaseSchema();
+
+            // Initialize Repositories (Data Access Layer)
+            DataAccess.IRepository<Account> accountRepo = new DataAccess.AccountRepository();
+            DataAccess.IRepository<Customer> customerRepo = new DataAccess.CustomerRepository();
+            DataAccess.IRepository<Transaction> transactionRepo = new DataAccess.TransactionRepository();
+
+            // Initialize Services (Business Layer)
+            Business.IAccountService accountService = new Business.AccountService(accountRepo);
+            Business.ICustomerService customerService = new Business.CustomerService(customerRepo);
+            // TransactionService needs both its repo and the account service
+            Business.ITransactionService transactionService = new Business.TransactionService(transactionRepo, accountService);
+
+            // Initialize UI (Presentation Layer)
             MainMenu menu = new MainMenu();
-            AccountUI accountUI = new AccountUI();
-            CustomerUI customerUI = new CustomerUI();
-            TransactionUI transactionUI = new TransactionUI();
+            AccountUI accountUI = new AccountUI(accountService);
+            CustomerUI customerUI = new CustomerUI(customerService);
+            TransactionUI transactionUI = new TransactionUI(transactionService);
 
             bool running = true;
 
@@ -50,6 +64,10 @@ namespace BankManagementSystem
                         break;
 
                     case 8:
+                        accountUI.ManageFeatures();
+                        break;
+
+                    case 9:
                         Console.WriteLine("Exiting system...");
                         running = false;
                         break;

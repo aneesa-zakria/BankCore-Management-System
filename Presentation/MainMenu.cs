@@ -1,8 +1,7 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
-
-using System;
 
 namespace BankManagementSystem.Presentation
 {
@@ -22,7 +21,8 @@ namespace BankManagementSystem.Presentation
             Console.WriteLine("5. Transfer Money");
             Console.WriteLine("6. Check Balance");
             Console.WriteLine("7. Transaction History");
-            Console.WriteLine("8. Exit");
+            Console.WriteLine("8. Manage Account Features");
+            Console.WriteLine("9. Exit");
             Console.WriteLine("=================================");
 
             Console.Write("Enter your choice: ");

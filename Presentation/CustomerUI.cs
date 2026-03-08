@@ -3,13 +3,13 @@ using BankManagementSystem.Business;
 
 namespace BankManagementSystem.Presentation
 {
-    class CustomerUI
+    public class CustomerUI
     {
-        private CustomerService customerService;
+        private readonly ICustomerService customerService;
 
-        public CustomerUI()
+        public CustomerUI(ICustomerService service)
         {
-            customerService = new CustomerService();
+            customerService = service;
         }
 
         public void CreateCustomer()

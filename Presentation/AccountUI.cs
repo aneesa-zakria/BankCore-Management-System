@@ -7,13 +7,13 @@ using BankManagementSystem.Domain;
 
 namespace BankManagementSystem.Presentation
 {
-    class AccountUI
+    public class AccountUI
     {
-        private AccountService accountService;
+        private readonly IAccountService accountService;
 
-        public AccountUI()
+        public AccountUI(IAccountService service)
         {
-            accountService = new AccountService();
+            accountService = service;
         }
 
         // Create new account
@@ -94,6 +94,64 @@ namespace BankManagementSystem.Presentation
                 Console.WriteLine($"Account Balance: {balance:C}");
             else
                 Console.WriteLine("Account not found.");
+        }
+
+        // Manage Account Features
+        public void ManageFeatures()
+        {
+            Console.Clear();
+            Console.WriteLine("===== MANAGE ACCOUNT FEATURES =====");
+
+            Console.Write("Enter Account Number: ");
+            int accNo = int.Parse(Console.ReadLine());
+
+            // We must retrieve the account again via concrete type to display its Features.
+            if (accountService is AccountService concreteService)
+            {
+                Account acc = concreteService.GetAccountByNumber(accNo);
+                if (acc == null)
+                {
+                    Console.WriteLine("Account not found.");
+                    return;
+                }
+
+                Console.WriteLine($"Current Features: {acc.Features}");
+            }
+            else
+            {
+                Console.WriteLine("Account features not accessible through this service layer.");
+            }
+            Console.WriteLine("1. Add Online Banking");
+            Console.WriteLine("2. Remove Online Banking");
+            Console.WriteLine("3. Add Overdraft Protection");
+            Console.WriteLine("4. Remove Overdraft Protection");
+            Console.Write("Enter your choice: ");
+            string choice = Console.ReadLine();
+
+            bool success = false;
+            switch (choice)
+            {
+                case "1":
+                    success = accountService.AddFeature(accNo, AccountFeatures.OnlineBanking);
+                    break;
+                case "2":
+                    success = accountService.RemoveFeature(accNo, AccountFeatures.OnlineBanking);
+                    break;
+                case "3":
+                    success = accountService.AddFeature(accNo, AccountFeatures.OverdraftProtection);
+                    break;
+                case "4":
+                    success = accountService.RemoveFeature(accNo, AccountFeatures.OverdraftProtection);
+                    break;
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    return;
+            }
+
+            if (success)
+                Console.WriteLine("Feature updated successfully.");
+            else
+                Console.WriteLine("Failed to update feature.");
         }
     }
 }

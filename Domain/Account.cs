@@ -5,6 +5,16 @@ using System.Text;
 
 namespace BankManagementSystem.Domain
 {
+    [Flags]
+    public enum AccountFeatures
+    {
+        None = 0,
+        OnlineBanking = 1 << 0, // 1
+        PaperStatements = 1 << 1, // 2
+        OverdraftProtection = 1 << 2, // 4
+        InternationalTransfers = 1 << 3 // 8
+    }
+
     public class Account
     {
         // Private fields (encapsulation)
@@ -35,15 +45,17 @@ namespace BankManagementSystem.Domain
         public decimal Balance
         {
             get { return balance; } // read-only from outside
+            protected set { balance = value; } // settable by derived classes
         }
+
+        // Bitwise Features property
+        public AccountFeatures Features { get; internal set; } = AccountFeatures.None;
 
         // Constructor
         public Account(int customerId, string accountType, decimal initialBalance)
         {
             this.customerId = customerId;
             this.accountType = accountType;
-            if (initialBalance < 0)
-                throw new ArgumentException("Balance cannot be negative");
             this.balance = initialBalance;
         }
 
@@ -55,8 +67,8 @@ namespace BankManagementSystem.Domain
             balance += amount;
         }
 
-        // Withdraw method (encapsulated)
-        public bool Withdraw(decimal amount)
+        // Withdraw method (encapsulated, virtual for polymorphism)
+        public virtual bool Withdraw(decimal amount)
         {
             if (amount <= 0)
                 throw new ArgumentException("Withdraw amount must be positive");
@@ -66,6 +78,22 @@ namespace BankManagementSystem.Domain
 
             balance -= amount;
             return true;
+        }
+
+        // Bitwise operator methods
+        public void AddFeature(AccountFeatures feature)
+        {
+            Features |= feature; // Bitwise OR
+        }
+
+        public void RemoveFeature(AccountFeatures feature)
+        {
+            Features &= ~feature; // Bitwise AND and NOT
+        }
+
+        public bool HasFeature(AccountFeatures feature)
+        {
+            return (Features & feature) == feature; // Bitwise AND
         }
 
         // Internal method to set AccountNumber (used by AccountService)

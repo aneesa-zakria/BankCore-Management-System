@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 using System;
 using System.Collections.Generic;
-using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
+using System.Text;
 using BankManagementSystem.Domain;
+using Microsoft.Data.SqlClient;
 
 namespace BankManagementSystem.DataAccess
 {
-    public class CustomerRepository
+    public class CustomerRepository : IRepository<Customer>
     {
         // Add customer
         public void Add(Customer customer)
@@ -139,7 +138,7 @@ namespace BankManagementSystem.DataAccess
         }
 
         // Generate next customer ID
-        public int GetNextCustomerId()
+        public int GetNextId()
         {
             using (SqlConnection conn = DbConnection.GetConnection())
             {

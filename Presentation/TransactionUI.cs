@@ -1,22 +1,19 @@
 ﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
-
-using System;
 using BankManagementSystem.Business;
 using BankManagementSystem.Domain;
 
 namespace BankManagementSystem.Presentation
 {
-    class TransactionUI
+    public class TransactionUI
     {
-        private TransactionService transactionService;
-        private AccountService accountService;
+        private readonly ITransactionService transactionService;
 
-        public TransactionUI()
+        public TransactionUI(ITransactionService service)
         {
-            transactionService = new TransactionService();
-            accountService = new AccountService();
+            transactionService = service;
         }
 
         // Transfer money from one account to another

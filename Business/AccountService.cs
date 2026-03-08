@@ -7,13 +7,13 @@ using BankManagementSystem.Domain;
 
 namespace BankManagementSystem.Business
 {
-    class AccountService
+    public class AccountService : IAccountService
     {
-        private AccountRepository accountRepo;
+        private IRepository<Account> accountRepo;
 
-        public AccountService()
+        public AccountService(IRepository<Account> repository)
         {
-            accountRepo = new AccountRepository();
+            accountRepo = repository;
         }
 
         // Create a new account
@@ -30,8 +30,14 @@ namespace BankManagementSystem.Business
                 // Generate unique account number
                 int newAccNo = GenerateAccountNumber();
 
-                // Create a new Account object (encapsulation used)
-                Account newAccount = new Account(customerId, accountType, initialBalance);
+                // Create a new Account object using polymorphism
+                Account newAccount;
+                if (accountType.Equals("Savings", StringComparison.OrdinalIgnoreCase))
+                    newAccount = new SavingsAccount(customerId, initialBalance);
+                else if (accountType.Equals("Checking", StringComparison.OrdinalIgnoreCase))
+                    newAccount = new CheckingAccount(customerId, initialBalance);
+                else
+                    newAccount = new Account(customerId, accountType, initialBalance);
                 newAccount.SetAccountNumber(newAccNo);
 
                 // Save account in the repository (database)
@@ -95,14 +101,36 @@ namespace BankManagementSystem.Business
             return acc.Balance; // encapsulation ensures safe read
         }
 
-        // Generate unique account number
+        // Add a feature to an account
+        public bool AddFeature(int accountNumber, AccountFeatures feature)
+        {
+            Account acc = accountRepo.Get(accountNumber);
+            if (acc == null) return false;
+
+            acc.AddFeature(feature);
+            accountRepo.Update(acc);
+            return true;
+        }
+
+        // Remove a feature from an account
+        public bool RemoveFeature(int accountNumber, AccountFeatures feature)
+        {
+            Account acc = accountRepo.Get(accountNumber);
+            if (acc == null) return false;
+
+            acc.RemoveFeature(feature);
+            accountRepo.Update(acc);
+            return true;
+        }
+
+        // Generate next account number
         private int GenerateAccountNumber()
         {
-            return accountRepo.GetNextAccountNumber();
+            return accountRepo.GetNextId();
         }
 
         // Get account by number (for internal use by other services)
-        internal Account GetAccountByNumber(int accountNumber)
+        public Account GetAccountByNumber(int accountNumber)
         {
             return accountRepo.Get(accountNumber);
         }

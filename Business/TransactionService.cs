@@ -7,15 +7,15 @@ using BankManagementSystem.Domain;
 
 namespace BankManagementSystem.Business
 {
-    class TransactionService
+    public class TransactionService : ITransactionService
     {
-        private TransactionRepository transactionRepo;
-        private AccountService accountService;
+        private IRepository<Transaction> transactionRepo;
+        private IAccountService accountService;
 
-        public TransactionService()
+        public TransactionService(IRepository<Transaction> tRepository, IAccountService aService)
         {
-            transactionRepo = new TransactionRepository();
-            accountService = new AccountService();
+            transactionRepo = tRepository;
+            accountService = aService;
         }
 
         // Transfer money between two accounts
@@ -39,9 +39,12 @@ namespace BankManagementSystem.Business
             // Deposit to destination account
             destAcc.Deposit(amount);
 
-            // Update accounts in DB
-            accountService.UpdateAccount(sourceAcc);
-            accountService.UpdateAccount(destAcc);
+            // Update accounts in DB (Requires cast because IAccountService interface does not expose internal UpdateAccount)
+            if (accountService is AccountService concreteAccService)
+            {
+                concreteAccService.UpdateAccount(sourceAcc);
+                concreteAccService.UpdateAccount(destAcc);
+            }
 
             // Create transaction records
             Transaction t1 = new Transaction(sourceAccNo, "Transfer Debit", amount, sourceAcc.Balance);
@@ -56,7 +59,14 @@ namespace BankManagementSystem.Business
         // Get transaction history for an account
         public List<Transaction> GetTransactionHistory(int accountNumber)
         {
-            return transactionRepo.GetByAccount(accountNumber);
+            if (transactionRepo is TransactionRepository concreteRepo)
+            {
+                return concreteRepo.GetByAccount(accountNumber);
+            }
+
+            // Fallback if not using the concrete SQL repo (e.g. testing)
+            List<Transaction> all = transactionRepo.GetAll();
+            return all.FindAll(t => t.AccountNumber == accountNumber);
         }
 
         // Deposit money (record transaction)
@@ -66,9 +76,13 @@ namespace BankManagementSystem.Business
             if (!success)
                 return false;
 
-            Account acc = accountService.GetAccountByNumber(accountNumber);
-            Transaction t = new Transaction(accountNumber, "Deposit", amount, acc.Balance);
-            transactionRepo.Add(t);
+            // (Requires cast because IAccountService interface does not expose internal GetAccountByNumber)
+            if (accountService is AccountService concreteAccService)
+            {
+                Account acc = concreteAccService.GetAccountByNumber(accountNumber);
+                Transaction t = new Transaction(accountNumber, "Deposit", amount, acc.Balance);
+                transactionRepo.Add(t);
+            }
 
             return true;
         }
@@ -80,9 +94,13 @@ namespace BankManagementSystem.Business
             if (!success)
                 return false;
 
-            Account acc = accountService.GetAccountByNumber(accountNumber);
-            Transaction t = new Transaction(accountNumber, "Withdraw", amount, acc.Balance);
-            transactionRepo.Add(t);
+            // (Requires cast because IAccountService interface does not expose internal GetAccountByNumber)
+            if (accountService is AccountService concreteAccService)
+            {
+                Account acc = concreteAccService.GetAccountByNumber(accountNumber);
+                Transaction t = new Transaction(accountNumber, "Withdraw", amount, acc.Balance);
+                transactionRepo.Add(t);
+            }
 
             return true;
         }

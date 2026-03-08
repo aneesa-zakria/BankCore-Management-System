@@ -1,15 +1,15 @@
-﻿using BankManagementSystem.Domain;
-using Microsoft.Data.SqlClient;
-using System;
+﻿using System;
 using System;
 using System.Collections.Generic;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Text;
+using BankManagementSystem.Domain;
+using Microsoft.Data.SqlClient;
 
 namespace BankManagementSystem.DataAccess
 {
-    public class AccountRepository
+    public class AccountRepository : IRepository<Account>
     {
         // Create new account
         public void Add(Account account)
@@ -18,8 +18,8 @@ namespace BankManagementSystem.DataAccess
             {
                 conn.Open();
 
-                string query = "INSERT INTO Accounts (AccountNumber, CustomerId, AccountType, Balance) " +
-                               "VALUES (@AccountNumber, @CustomerId, @AccountType, @Balance)";
+                string query = "INSERT INTO Accounts (AccountNumber, CustomerId, AccountType, Balance, Features) " +
+                               "VALUES (@AccountNumber, @CustomerId, @AccountType, @Balance, @Features)";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
@@ -27,6 +27,7 @@ namespace BankManagementSystem.DataAccess
                     cmd.Parameters.AddWithValue("@CustomerId", account.CustomerId);
                     cmd.Parameters.AddWithValue("@AccountType", account.AccountType);
                     cmd.Parameters.AddWithValue("@Balance", account.Balance);
+                    cmd.Parameters.AddWithValue("@Features", (int)account.Features);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -40,12 +41,13 @@ namespace BankManagementSystem.DataAccess
             {
                 conn.Open();
 
-                string query = "UPDATE Accounts SET Balance=@Balance WHERE AccountNumber=@AccountNumber";
+                string query = "UPDATE Accounts SET Balance=@Balance, Features=@Features WHERE AccountNumber=@AccountNumber";
 
                 using (SqlCommand cmd = new SqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("@AccountNumber", account.AccountNumber);
                     cmd.Parameters.AddWithValue("@Balance", account.Balance);
+                    cmd.Parameters.AddWithValue("@Features", (int)account.Features);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -86,13 +88,20 @@ namespace BankManagementSystem.DataAccess
                     {
                         if (reader.Read())
                         {
-                            Account account = new Account(
-                                Convert.ToInt32(reader["CustomerId"]),
-                                reader["AccountType"].ToString(),
-                                Convert.ToDecimal(reader["Balance"])
-                            );
+                            string type = reader["AccountType"].ToString();
+                            int custId = Convert.ToInt32(reader["CustomerId"]);
+                            decimal bal = Convert.ToDecimal(reader["Balance"]);
+                            Account account;
+
+                            if (type.Equals("Savings", StringComparison.OrdinalIgnoreCase))
+                                account = new SavingsAccount(custId, bal);
+                            else if (type.Equals("Checking", StringComparison.OrdinalIgnoreCase))
+                                account = new CheckingAccount(custId, bal);
+                            else
+                                account = new Account(custId, type, bal);
 
                             account.AccountNumber = Convert.ToInt32(reader["AccountNumber"]);
+                            account.Features = (AccountFeatures)Convert.ToInt32(reader["Features"]);
 
                             return account;
                         }
@@ -120,13 +129,20 @@ namespace BankManagementSystem.DataAccess
                     {
                         while (reader.Read())
                         {
-                            Account account = new Account(
-                                Convert.ToInt32(reader["CustomerId"]),
-                                reader["AccountType"].ToString(),
-                                Convert.ToDecimal(reader["Balance"])
-                            );
+                            string type = reader["AccountType"].ToString();
+                            int custId = Convert.ToInt32(reader["CustomerId"]);
+                            decimal bal = Convert.ToDecimal(reader["Balance"]);
+                            Account account;
+
+                            if (type.Equals("Savings", StringComparison.OrdinalIgnoreCase))
+                                account = new SavingsAccount(custId, bal);
+                            else if (type.Equals("Checking", StringComparison.OrdinalIgnoreCase))
+                                account = new CheckingAccount(custId, bal);
+                            else
+                                account = new Account(custId, type, bal);
 
                             account.AccountNumber = Convert.ToInt32(reader["AccountNumber"]);
+                            account.Features = (AccountFeatures)Convert.ToInt32(reader["Features"]);
 
                             accounts.Add(account);
                         }
@@ -137,8 +153,8 @@ namespace BankManagementSystem.DataAccess
             return accounts;
         }
 
-        // Get next account number
-        public int GetNextAccountNumber()
+        // Generate next account number
+        public int GetNextId()
         {
             using (SqlConnection conn = DbConnection.GetConnection())
             {

@@ -8,13 +8,13 @@ using BankManagementSystem.Domain;
 
 namespace BankManagementSystem.Business
 {
-    class CustomerService
+    public class CustomerService : ICustomerService
     {
-        private CustomerRepository customerRepo;
+        private IRepository<Customer> customerRepo;
 
-        public CustomerService()
+        public CustomerService(IRepository<Customer> repository)
         {
-            customerRepo = new CustomerRepository();
+            customerRepo = repository;
         }
 
         // Create a new customer
@@ -97,7 +97,7 @@ namespace BankManagementSystem.Business
         // Generate unique Customer ID
         private int GenerateCustomerId()
         {
-            return customerRepo.GetNextCustomerId();
+            return customerRepo.GetNextId();
         }
     }
 }
